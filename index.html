@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#10243a">
+    <meta name="description" content="Panel estático para análisis de órdenes de mantenimiento CMMS.">
+    <title>CMMS | Panel de mantenimiento</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="./" aria-label="CMMS, inicio">
+          <span class="brand-mark" aria-hidden="true">C</span>
+          <span><strong>CMMS</strong><small>INTELLIGENCE</small></span>
+        </a>
+
+        <div class="side-label">ESPACIO DE TRABAJO</div>
+        <div class="workspace-card">
+          <span class="workspace-dot"></span>
+          <span><strong>Análisis de mantenimiento</strong><small>Procesamiento local</small></span>
+        </div>
+
+        <div class="side-label">DATASET ACTIVO</div>
+        <section class="upload-card" aria-label="Carga de dataset">
+          <div class="upload-icon" aria-hidden="true">↑</div>
+          <strong>Importar dataset</strong>
+          <p>Selecciona un archivo CMMS en formato CSV o Excel.</p>
+          <label class="button button-light upload-button" for="fileInput">Seleccionar archivo</label>
+          <input id="fileInput" type="file" accept=".csv,.xlsx,.xls" hidden>
+          <small class="upload-support">CSV · XLSX · XLS</small>
+        </section>
+
+        <div class="side-label">FILTROS DEL INFORME</div>
+        <div class="filter-group">
+          <label for="maintenanceFilter">Tipo de mantenimiento</label>
+          <select id="maintenanceFilter" disabled>
+            <option value="">Todos los tipos</option>
+          </select>
+        </div>
+        <div class="filter-group date-filters">
+          <label for="dateFrom">Fecha de inicio</label>
+          <input id="dateFrom" type="date" disabled>
+          <label for="dateTo">Fecha de término</label>
+          <input id="dateTo" type="date" disabled>
+        </div>
+        <button id="resetFilters" class="reset-button" type="button" disabled>Restablecer filtros</button>
+
+        <div class="sidebar-footer">
+          <span class="privacy-icon" aria-hidden="true">◈</span>
+          <span><strong>Privacidad por diseño</strong><small>Los datos se procesan en este navegador.</small></span>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="breadcrumb">Gestión de activos <span>/</span> <strong>Panel ejecutivo</strong></div>
+          <div class="topbar-actions">
+            <span id="datasetName" class="dataset-name">Sin dataset</span>
+            <button id="exportPdf" class="button button-primary" type="button" disabled>
+              <span aria-hidden="true">▤</span> Exportar informe PDF
+            </button>
+          </div>
+        </header>
+
+        <section class="page-heading">
+          <div>
+            <p class="eyebrow">CENTRO DE CONTROL · MANTENIMIENTO</p>
+            <h1>Desempeño de mantenimiento</h1>
+            <p id="pageSubtitle" class="page-subtitle">Carga un dataset CMMS para generar un diagnóstico ejecutivo interactivo.</p>
+          </div>
+          <div id="periodBadge" class="period-badge"><span class="status-dot"></span> Esperando dataset</div>
+        </section>
+
+        <div id="alert" class="alert" role="status" aria-live="polite" hidden></div>
+
+        <section id="emptyState" class="empty-state">
+          <div class="empty-illustration" aria-hidden="true">
+            <div class="empty-sheet"><span></span><span></span><span></span><i></i></div>
+            <div class="empty-chart"><b></b><b></b><b></b><b></b></div>
+          </div>
+          <h2>Comienza con tus datos CMMS</h2>
+          <p>Importa un archivo con registros de órdenes de trabajo. El panel calculará indicadores, tendencias y prioridades sin enviar datos a un servidor.</p>
+          <label class="button button-primary" for="fileInput">Cargar dataset</label>
+          <p class="format-hint">Admite CSV (delimitado por coma o punto y coma) y hojas Excel.</p>
+        </section>
+
+        <div id="dashboard" hidden>
+          <section class="kpi-grid" aria-label="Indicadores clave">
+            <article class="kpi-card">
+              <div class="kpi-top"><span>Órdenes de trabajo</span><span class="kpi-icon icon-blue">OT</span></div>
+              <strong id="kpiOrders" class="kpi-value">—</strong>
+              <small id="kpiOrdersHint">Registros en el período</small>
+            </article>
+            <article class="kpi-card">
+              <div class="kpi-top"><span>Horas-hombre</span><span class="kpi-icon icon-violet">HH</span></div>
+              <strong id="kpiLabor" class="kpi-value">—</strong>
+              <small>Esfuerzo total registrado</small>
+            </article>
+            <article class="kpi-card">
+              <div class="kpi-top"><span>Downtime acumulado</span><span class="kpi-icon icon-amber">DT</span></div>
+              <strong id="kpiDowntime" class="kpi-value">—</strong>
+              <small>Horas de indisponibilidad</small>
+            </article>
+            <article class="kpi-card">
+              <div class="kpi-top"><span>Costo directo</span><span class="kpi-icon icon-green">$</span></div>
+              <strong id="kpiCost" class="kpi-value">—</strong>
+              <small>Moneda según el dataset</small>
+            </article>
+            <article class="kpi-card">
+              <div class="kpi-top"><span>MTTR correctivo</span><span class="kpi-icon icon-cyan">↗</span></div>
+              <strong id="kpiMttr" class="kpi-value">—</strong>
+              <small>Media de tiempo de reparación</small>
+            </article>
+            <article class="kpi-card">
+              <div class="kpi-top"><span>Mediana de reparación</span><span class="kpi-icon icon-slate">◷</span></div>
+              <strong id="kpiMedian" class="kpi-value">—</strong>
+              <small>Tiempo de reparación registrado</small>
+            </article>
+          </section>
+
+          <section class="insight-card">
+            <div class="insight-icon" aria-hidden="true">✦</div>
+            <div><span class="insight-label">HALLAZGO DEL PERÍODO</span><p id="keyInsight">El análisis se actualizará con los datos cargados.</p></div>
+          </section>
+
+          <section class="section-heading">
+            <div><p class="eyebrow">ANÁLISIS OPERACIONAL</p><h2>Indicadores y tendencias</h2></div>
+            <span class="section-note">Las visualizaciones se actualizan con los filtros seleccionados.</span>
+          </section>
+
+          <section class="chart-grid">
+            <article class="panel panel-wide">
+              <div class="panel-heading"><div><h3>Impacto por tipo de mantenimiento</h3><p>Participación porcentual en las métricas del período</p></div><span class="chart-tag">COMPARATIVO</span></div>
+              <div id="impactChart" class="chart-area" role="img" aria-label="Impacto por tipo de mantenimiento"></div>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><h3>Evolución mensual</h3><p>Órdenes de trabajo creadas o iniciadas</p></div><span class="chart-tag">TENDENCIA</span></div>
+              <div id="monthlyChart" class="chart-area" role="img" aria-label="Evolución mensual de órdenes"></div>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><h3>MTTR por tipo de equipo</h3><p>Tiempo medio de reparación correctiva</p></div><span class="chart-tag">MANTENIBILIDAD</span></div>
+              <div id="mttrChart" class="chart-area" role="img" aria-label="MTTR por tipo de equipo"></div>
+            </article>
+            <article class="panel panel-wide">
+              <div class="panel-heading"><div><h3>Modos de falla prioritarios</h3><p>Top 10 por frecuencia · línea acumulada de Pareto</p></div><span class="chart-tag">PARETO</span></div>
+              <div id="failureChart" class="chart-area chart-area-tall" role="img" aria-label="Pareto de modos de falla"></div>
+            </article>
+          </section>
+
+          <section class="panel impact-table-panel">
+            <div class="panel-heading"><div><h3>Distribución por estrategia</h3><p>Participación de cada tipo en la carga y el impacto total</p></div></div>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Tipo de mantenimiento</th><th>Órdenes</th><th>% OT</th><th>% HH</th><th>% Downtime</th><th>% Costo</th></tr></thead>
+                <tbody id="impactTable"></tbody>
+              </table>
+            </div>
+          </section>
+          <footer class="dashboard-footer"><span>CMMS Intelligence · Análisis local</span><span id="recordFooter"></span></footer>
+        </div>
+      </main>
+    </div>
+
+    <section id="printReport" class="print-report" aria-hidden="true"></section>
+  </body>
+</html>
